@@ -36,10 +36,36 @@
             </TabItem>
 
             <TabItem Header="Gestion des Emprunts">
-                <StackPanel>
-                    <!-- Ajouter des contrôles pour la gestion des emprunts ici -->
-                </StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Section d'enregistrement d'un nouvel emprunt -->
+                    <StackPanel Grid.Row="0" Margin="10">
+                        <TextBlock Text="Enregistrer un nouvel emprunt" FontWeight="Bold" Margin="2"/>
+
+                        <TextBlock Text="ID Adhérent:" Margin="2"/>
+                        <TextBox x:Name="AdherentIdTextBox" Width="150" Margin="2"/>
+
+                        <TextBlock Text="ISBN du Livre:" Margin="2"/>
+                        <TextBox x:Name="BookISBNTextBox" Width="150" Margin="2"/>
+
+                        <TextBlock Text="Date d'emprunt:" Margin="2"/>
+                        <DatePicker x:Name="LoanDatePicker" Margin="2"/>
+
+                        <Button Content="Enregistrer Emprunt" Margin="2" Click="RegisterLoanButton_Click"/>
+                    </StackPanel>
+
+                    <!-- Liste des emprunts en cours -->
+                    <DataGrid x:Name="LoansDataGrid" Grid.Row="1" AutoGenerateColumns="True" Margin="10">
+                        <!-- Les colonnes du DataGrid seront générées automatiquement -->
+                        <!-- Vous pouvez également les définir manuellement pour plus de contrôle -->
+                    </DataGrid>
+                </Grid>
             </TabItem>
+
 
             <TabItem Header="Gestion des Réservations">
                 <StackPanel>

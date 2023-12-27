@@ -73,6 +73,32 @@ namespace BackOfficeApp.Views
             }
         }
 
+
+        private void RegisterLoanButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Récupérer les informations du formulaire
+            int adherentId = int.Parse(AdherentIdTextBox.Text);
+            string isbn = BookISBNTextBox.Text;
+            DateTime loanDate = LoanDatePicker.SelectedDate ?? DateTime.Now;
+
+            // Implémenter la logique pour enregistrer le nouvel emprunt dans la base de données
+            // Pensez à vérifier que le livre n'est pas déjà emprunté et que l'adhérent n'a pas de retard de retour
+
+            // Mettre à jour la liste des emprunts
+            LoadCurrentLoans();
+        }
+
+        private void LoadCurrentLoans()
+        {
+            // Implémenter la logique pour charger les emprunts actuels de la base de données
+            // et les afficher dans le DataGrid
+        }
+
+
+
+
+
+
     }
 
 
