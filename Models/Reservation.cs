@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace BackOfficeApp.Models
 {
-    public class Emprunt
+    public class Reservation
     {
         [Key]
-        public int EmpruntID { get; set; }
+        public int ReservationID { get; set; }
 
         [ForeignKey("Adherent")]
         public int AdherentID { get; set; }
@@ -21,11 +21,10 @@ namespace BackOfficeApp.Models
         public string ISBN { get; set; }
         public virtual Livre Livre { get; set; }
 
-        public DateTime DateEmprunt { get; set; }
-        public DateTime DateRetourPrevu { get; set; }
-        public DateTime? DateRetourReel { get; set; } // Peut être null si le livre n'est pas encore retourné
+        public DateTime DateReservation { get; set; }
+        public DateTime? DatePrevuRetrait { get; set; } // Date prévue pour la récupération du livre
 
-        // Ajoutez d'autres propriétés si nécessaire, par exemple pour gérer les retards ou les pénalités
+        // Vous pouvez ajouter d'autres propriétés selon les besoins de votre application
     }
-
 }
+

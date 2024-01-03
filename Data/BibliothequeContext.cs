@@ -16,6 +16,7 @@ namespace BackOfficeApp.Data
         public DbSet<Adherent> Adherents { get; set; }
         public DbSet<Livre> Livres { get; set; }
         public DbSet<Emprunt> Emprunts { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
