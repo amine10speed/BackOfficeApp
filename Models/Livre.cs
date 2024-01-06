@@ -15,6 +15,7 @@ namespace BackOfficeApp.Models
         public string Auteur { get; set; }
         public int AnneePublication { get; set; }
         public int Quantite { get; set; }
+        public string ImageCouvertureUrl { get; set; }
     }
 
 

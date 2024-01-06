@@ -18,6 +18,8 @@ using System.Globalization;
 using System.IO;
 using Microsoft.Win32;
 using CsvHelper.Configuration;
+using IOPath = System.IO.Path;
+
 
 namespace BackOfficeApp.Views
 {
@@ -48,6 +50,9 @@ namespace BackOfficeApp.Views
         private TextBox auteurTextBox; // Pour l'auteur du livre
         private TextBox anneePubTextBox; // Pour l'année de publication du livre
         private TextBox quantiteTextBox; // Pour la quantité du livre
+
+        private string selectedImagePath;
+        private TextBox imageTextBox;
 
         // la partie du code suivante est pour la gestion d'adherant
         private void BtnAjouterAdherent_Click(object sender, RoutedEventArgs e)
@@ -757,6 +762,19 @@ namespace BackOfficeApp.Views
             quantiteTextBox = new TextBox { Margin = new Thickness(5) };
             FormContainer2.Children.Add(quantiteTextBox);
 
+            // imge section
+            FormContainer2.Children.Add(new TextBlock { Text = "Image de couverture", Margin = new Thickness(5) });
+            var imageButton = new Button { Content = "Choisir Image", Margin = new Thickness(5) };
+            imageButton.Click += ImageButton_Click; // Ajoutez cette nouvelle méthode
+            FormContainer2.Children.Add(imageButton);
+
+
+            imageTextBox = new TextBox { Margin = new Thickness(5), IsReadOnly = true };
+            imageTextBox.Name = "ImageCouvertureTextBox";
+            FormContainer2.Children.Add(imageTextBox);
+
+            // fin image section
+
             // Bouton de soumission pour le livre
             var submitButton = new Button { Content = "Enregistrer Livre", Margin = new Thickness(5) };
             submitButton.Click += SubmitLivreForm_Click; // Implémentez cette méthode pour enregistrer le livre
@@ -765,47 +783,110 @@ namespace BackOfficeApp.Views
             var resetButton = new Button { Content = "Réinitialiser Formulaire", Margin = new Thickness(5) };
             resetButton.Click += ResetLivreForm_Click; // Implémentez cette méthode pour réinitialiser le formulaire
             FormContainer2.Children.Add(resetButton);
+
+            
         }
+
+
+        private void ImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                selectedImagePath = openFileDialog.FileName;
+                // Check if imageTextBox is not null before using it
+                if (imageTextBox != null)
+                {
+                    imageTextBox.Text = selectedImagePath;
+                }
+                else
+                {
+                    // Handle the case where imageTextBox is null, such as initializing it or logging an error
+                    MessageBox.Show("Error: imageTextBox is not initialized.");
+                }
+            }
+        }
+
 
 
         private void SubmitLivreForm_Click(object sender, RoutedEventArgs e)
         {
-            // Création d'un nouveau livre à partir des informations saisies
+            // Create a new book from the entered information
             var livre = new Livre
             {
                 ISBN = isbnTextBox.Text,
                 Titre = titreTextBox.Text,
                 Auteur = auteurTextBox.Text,
-                AnneePublication = int.Parse(anneePubTextBox.Text), // Assurez-vous que c'est un nombre valide
-                Quantite = int.Parse(quantiteTextBox.Text)          // Assurez-vous que c'est un nombre valide
+                AnneePublication = int.Parse(anneePubTextBox.Text), // Ensure this is a valid number
+                Quantite = int.Parse(quantiteTextBox.Text),         // Ensure this is a valid number
+                ImageCouvertureUrl = "" // Add this property in your Livre class
             };
 
-            using (var context = new BibliothequeContext())
+            if (!string.IsNullOrWhiteSpace(selectedImagePath))
             {
-                // Ajout du livre à la base de données
-                context.Livres.Add(livre);
-                context.SaveChanges();
+                // Get the path to the project directory
+                string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.Parent.FullName;
+
+                // Combine the project directory with the 'images' directory
+                string imagesDir = IOPath.Combine(projectDir, "images");
+
+                // Ensure the 'images' directory exists
+                Directory.CreateDirectory(imagesDir);
+
+                // Sanitize the title to create a valid filename
+                string sanitizedTitle = new string(livre.Titre.Where(ch => !IOPath.GetInvalidFileNameChars().Contains(ch)).ToArray());
+
+                // Extract the file extension from the selected image path
+                string fileExtension = IOPath.GetExtension(selectedImagePath);
+
+                // Create the destination file name using the sanitized title and original file extension
+                string destFileName = sanitizedTitle + fileExtension;
+
+                // Combine the 'images' directory with the destination file name to get the absolute file path
+                string destFilePathAbsolute = IOPath.Combine(imagesDir, destFileName);
+
+                // Copy the image to the 'images' directory, overwriting if the file already exists
+                File.Copy(selectedImagePath, destFilePathAbsolute, true);
+
+                // Set the ImageCouvertureUrl to the relative path of the image from the project directory
+                livre.ImageCouvertureUrl = IOPath.Combine("images", destFileName);
             }
 
-            MessageBox.Show("Livre enregistré avec succès !");
+            // Add exception handling for database operations
+            try
+            {
+                using (var context = new BibliothequeContext())
+                {
+                    // Add the book to the database
+                    context.Livres.Add(livre);
+                    context.SaveChanges();
+                }
 
-            // Réinitialiser les champs du formulaire
-            isbnTextBox.Text = "";
-            titreTextBox.Text = "";
-            auteurTextBox.Text = "";
-            anneePubTextBox.Text = "";
-            quantiteTextBox.Text = "";
+                MessageBox.Show("Livre enregistré avec succès !");
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions, such as database errors
+                MessageBox.Show($"Une erreur est survenue lors de l'enregistrement du livre : {ex.Message}");
+            }
+
+            // Reset the form fields
+            ResetLivreForm_Click(this, new RoutedEventArgs());
         }
-
+        
 
         private void ResetLivreForm_Click(object sender, RoutedEventArgs e)
         {
-            // Réinitialiser les champs du formulaire pour les livres
+            // Reset the form fields for books
             isbnTextBox.Text = "";
             titreTextBox.Text = "";
             auteurTextBox.Text = "";
             anneePubTextBox.Text = "";
             quantiteTextBox.Text = "";
+            if (imageTextBox != null) // Make sure imageTextBox is declared at class level
+                imageTextBox.Text = "";
+            selectedImagePath = ""; // Clear the selected image path
         }
 
 
@@ -839,6 +920,17 @@ namespace BackOfficeApp.Views
             FormContainer2.Children.Add(new TextBlock { Text = "Quantité", Margin = new Thickness(5) });
             FormContainer2.Children.Add(quantiteTextBox);
 
+
+            // Add a button to choose a new cover image
+            var imageButton = new Button { Content = "Choisir Nouvelle Image", Margin = new Thickness(5) };
+            imageButton.Click += ImageButton_Click;
+            FormContainer2.Children.Add(imageButton);
+
+            // Add a readonly textbox to display the selected image path
+            imageTextBox = new TextBox { Margin = new Thickness(5), IsReadOnly = true };
+            imageTextBox.Name = "ImageCouvertureTextBox";
+            FormContainer2.Children.Add(imageTextBox);
+
             // Bouton de mise à jour pour le livre
             var updateButton = new Button { Content = "Mettre à Jour Livre", Margin = new Thickness(5) };
             updateButton.Click += UpdateLivreForm_Click; // Implémentez cette méthode pour mettre à jour le livre
@@ -860,6 +952,7 @@ namespace BackOfficeApp.Views
                         auteurTextBox.Text = livre.Auteur;
                         anneePubTextBox.Text = livre.AnneePublication.ToString();
                         quantiteTextBox.Text = livre.Quantite.ToString();
+                        imageTextBox.Text = livre.ImageCouvertureUrl.ToString();
                     }
                     else
                     {
@@ -882,7 +975,7 @@ namespace BackOfficeApp.Views
                     var livreAModifier = context.Livres.FirstOrDefault(l => l.ISBN == isbnTextBox.Text);
                     if (livreAModifier != null)
                     {
-                        // Mettre à jour les propriétés du livre avec les nouvelles valeurs
+                        // Update the book properties with new values
                         livreAModifier.Titre = titreTextBox.Text;
                         livreAModifier.Auteur = auteurTextBox.Text;
 
@@ -906,15 +999,51 @@ namespace BackOfficeApp.Views
                             return;
                         }
 
+                        // If a new image path has been selected, update it
+                        if (!string.IsNullOrWhiteSpace(selectedImagePath))
+                        {
+                            // Define the path to the images directory relative to the project directory
+                            string projectDir = IOPath.GetFullPath(IOPath.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\"));
+                            string imagesDir = IOPath.Combine(projectDir, "images");
+                            Directory.CreateDirectory(imagesDir);
+
+                            // Logic to sanitize the title
+                            string sanitizedTitle = new string(livreAModifier.Titre.Where(ch => !IOPath.GetInvalidFileNameChars().Contains(ch)).ToArray());
+
+                            // Create a new unique filename for the new image or use the same name as the old image
+                            string fileExtension = IOPath.GetExtension(selectedImagePath);
+                            string destFileName = $"{sanitizedTitle}{fileExtension}"; // Removed unique identifier to replace the old file
+
+                            // Define the path for the new image file
+                            string destFilePath = IOPath.Combine(imagesDir, destFileName);
+
+                            // If an old image exists, delete it
+                            if (!string.IsNullOrEmpty(livreAModifier.ImageCouvertureUrl) && IOPath.IsPathRooted(livreAModifier.ImageCouvertureUrl))
+                            {
+                                string oldFilePath = IOPath.Combine(projectDir, livreAModifier.ImageCouvertureUrl);
+                                if (File.Exists(oldFilePath))
+                                {
+                                    File.Delete(oldFilePath);
+                                }
+                            }
+
+                            // Copy the image to the destination path
+                            File.Copy(selectedImagePath, destFilePath, true); // Overwrite if the file exists
+
+                            // Update the ImageCouvertureUrl with a relative path from the project directory
+                            livreAModifier.ImageCouvertureUrl = IOPath.GetRelativePath(projectDir, destFilePath);
+                        }
+
                         context.SaveChanges();
                         MessageBox.Show("Livre mis à jour avec succès !");
 
-                        // Réinitialiser les champs du formulaire
+                        // Reset the form fields
                         isbnTextBox.Text = "";
                         titreTextBox.Text = "";
                         auteurTextBox.Text = "";
                         anneePubTextBox.Text = "";
                         quantiteTextBox.Text = "";
+                        imageTextBox.Text = "";
                     }
                     else
                     {
@@ -927,6 +1056,7 @@ namespace BackOfficeApp.Views
                 MessageBox.Show("Veuillez entrer un ISBN valide.");
             }
         }
+
 
 
         private void BtnRetirerLivre_Click(object sender, RoutedEventArgs e)
