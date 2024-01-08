@@ -42,13 +42,6 @@
                     </StackPanel>
                 </StackPanel>
             </TabItem>
-
-            <TabItem Header="Analyse et Rapports">
-                <StackPanel>
-                    <Button Content="Générer des Rapports" Margin="5"/>
-                    <Button Content="Analyser les Tendances" Margin="5"/>
-                </StackPanel>
-            </TabItem>
         </TabControl>
     </Grid>
 </Window>

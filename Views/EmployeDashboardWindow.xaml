@@ -40,12 +40,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Section d'enregistrement d'un nouvel emprunt -->
                     <StackPanel Grid.Row="0" Margin="10">
-                        <TextBlock Text="Enregistrer un nouvel emprunt" FontWeight="Bold" Margin="2"/>
-
                         <TextBlock Text="ID Adhérent:" Margin="2"/>
                         <TextBox x:Name="AdherentIdTextBox" Width="150" Margin="2"/>
 
@@ -61,21 +60,23 @@
                     <!-- Liste des emprunts en cours -->
                     <DataGrid x:Name="LoansDataGrid" Grid.Row="1" AutoGenerateColumns="True" Margin="10">
                         <!-- Les colonnes du DataGrid seront générées automatiquement -->
-                        <!-- Vous pouvez également les définir manuellement pour plus de contrôle -->
                     </DataGrid>
+
+                    <!-- Section de modification et de suppression d'un emprunt -->
+                    <StackPanel Grid.Row="2" Margin="10" Orientation="Horizontal">
+                        <Button Content="Modifier Date Retour" Margin="2" Click="ModifyLoanButton_Click"/>
+                        <DatePicker x:Name="ReturnDatePicker" Margin="2"/>
+                        <Button Content="Supprimer Emprunt" Margin="2" Click="DeleteLoanButton_Click"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
+
+
 
 
             <TabItem Header="Gestion des Réservations">
                 <StackPanel>
                     <!-- Ajouter des contrôles pour la gestion des réservations ici -->
-                </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Gestion des Adhérents">
-                <StackPanel>
-                    <!-- Ajouter des contrôles pour la gestion des adhérents ici -->
                 </StackPanel>
             </TabItem>
         </TabControl>

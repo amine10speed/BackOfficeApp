@@ -1,5 +1,6 @@
 ﻿using BackOfficeApp.Data;
 using BackOfficeApp.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,26 +75,89 @@ namespace BackOfficeApp.Views
         }
 
 
+        private void ChargerTousLesEmprunts()
+        {
+            using (var context = new BibliothequeContext())
+            {
+                LoansDataGrid.ItemsSource = context.Emprunts.Include(e => e.Adherent).Include(e => e.Livre).ToList();
+            }
+        }
+
+        private void SearchLoanButton_Click(object sender, RoutedEventArgs e)
+        {
+            int.TryParse(AdherentIdTextBox.Text, out int adherentId);
+            string isbn = BookISBNTextBox.Text;
+
+            using (var context = new BibliothequeContext())
+            {
+                var query = context.Emprunts.AsQueryable();
+
+                if (adherentId > 0)
+                {
+                    query = query.Where(emprunt => emprunt.AdherentID == adherentId);
+                }
+                if (!string.IsNullOrWhiteSpace(isbn))
+                {
+                    query = query.Where(emprunt => emprunt.ISBN.Contains(isbn));
+                }
+
+                LoansDataGrid.ItemsSource = query.Include(e => e.Adherent).Include(e => e.Livre).ToList();
+            }
+        }
+
+
         private void RegisterLoanButton_Click(object sender, RoutedEventArgs e)
         {
-            // Récupérer les informations du formulaire
-            int adherentId = int.Parse(AdherentIdTextBox.Text);
+            int.TryParse(AdherentIdTextBox.Text, out int adherentId);
             string isbn = BookISBNTextBox.Text;
-            DateTime loanDate = LoanDatePicker.SelectedDate ?? DateTime.Now;
+            DateTime dateEmprunt = LoanDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
 
-            // Implémenter la logique pour enregistrer le nouvel emprunt dans la base de données
-            // Pensez à vérifier que le livre n'est pas déjà emprunté et que l'adhérent n'a pas de retard de retour
+            Emprunt nouvelEmprunt = new Emprunt
+            {
+                AdherentID = adherentId,
+                ISBN = isbn,
+                DateEmprunt = dateEmprunt,
+                DateRetourPrevu = dateEmprunt.AddDays(30) // Exemple: 30 jours par défaut
+            };
 
-            // Mettre à jour la liste des emprunts
-            LoadCurrentLoans();
+            using (var context = new BibliothequeContext())
+            {
+                context.Emprunts.Add(nouvelEmprunt);
+                context.SaveChanges();
+            }
+
+            ChargerTousLesEmprunts();
         }
 
-        private void LoadCurrentLoans()
+        private void ModifyLoanButton_Click(object sender, RoutedEventArgs e)
         {
-            // Implémenter la logique pour charger les emprunts actuels de la base de données
-            // et les afficher dans le DataGrid
+            if (LoansDataGrid.SelectedItem is Emprunt selectedLoan)
+            {
+                selectedLoan.DateRetourReel = ReturnDatePicker.SelectedDate;
+                using (var context = new BibliothequeContext())
+                {
+                    context.Emprunts.Update(selectedLoan);
+                    context.SaveChanges();
+                }
+
+                ChargerTousLesEmprunts();
+            }
         }
 
+
+        private void DeleteLoanButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (LoansDataGrid.SelectedItem is Emprunt selectedLoan)
+            {
+                using (var context = new BibliothequeContext())
+                {
+                    context.Emprunts.Remove(selectedLoan);
+                    context.SaveChanges();
+                }
+
+                ChargerTousLesEmprunts();
+            }
+        }
 
 
 
