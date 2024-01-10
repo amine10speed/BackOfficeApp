@@ -125,22 +125,32 @@ namespace BackOfficeApp.Views
             string isbn = BookISBNTextBox.Text;
             DateTime dateEmprunt = LoanDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
 
-            Emprunt nouvelEmprunt = new Emprunt
-            {
-                AdherentID = adherentId,
-                ISBN = isbn,
-                DateEmprunt = dateEmprunt,
-                DateRetourPrevu = dateEmprunt.AddDays(14) // Fixé à 14 jours après la date d'emprunt
-            };
-
             using (var context = new BibliothequeContext())
             {
+                // Vérifier si l'adhérent a déjà emprunté le même livre et ne l'a pas encore retourné
+                bool aDejaEmprunteCeLivre = context.Emprunts.Any(e => e.AdherentID == adherentId && e.ISBN == isbn && e.DateRetourReel == null);
+
+                if (aDejaEmprunteCeLivre)
+                {
+                    MessageBox.Show("Cet adhérent a déjà emprunté ce livre et ne l'a pas encore retourné.");
+                    return; // Arrêter l'exécution si l'adhérent a déjà emprunté le même livre
+                }
+
+                Emprunt nouvelEmprunt = new Emprunt
+                {
+                    AdherentID = adherentId,
+                    ISBN = isbn,
+                    DateEmprunt = dateEmprunt,
+                    DateRetourPrevu = dateEmprunt.AddDays(14) // Fixé à 14 jours après la date d'emprunt
+                };
+
                 context.Emprunts.Add(nouvelEmprunt);
                 context.SaveChanges();
             }
 
             ChargerTousLesEmprunts();
         }
+
 
 
         private void ModifyLoanButton_Click(object sender, RoutedEventArgs e)
@@ -187,62 +197,64 @@ namespace BackOfficeApp.Views
             string isbn = BookISBNReservationTextBox.Text;
             DateTime dateReservation = ReservationDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
 
-            DateTime? datePrevuRetrait = TrouverPremiereDateRetourNonReservee(isbn);
-
-            Reservation newReservation = new Reservation
+            using (var context = new BibliothequeContext())
             {
-                AdherentID = adherentId,
-                ISBN = isbn,
-                DateReservation = dateReservation,
-                DatePrevuRetrait = datePrevuRetrait
-            };
+                // Vérifier si l'adhérent a déjà réservé le même livre et si la réservation est toujours active
+                bool aDejaReserveCeLivre = context.Reservations.Any(r =>
+                    r.AdherentID == adherentId &&
+                    r.ISBN == isbn &&
+                    (r.DatePrevuRetrait == null || r.DatePrevuRetrait > DateTime.Now));
 
-            try
-            {
-                using (var context = new BibliothequeContext())
+                if (aDejaReserveCeLivre)
                 {
-                    context.Reservations.Add(newReservation);
-                    context.SaveChanges();
+                    MessageBox.Show("Cet adhérent a déjà une réservation active pour ce livre.");
+                    return; // Arrêter l'exécution si l'adhérent a déjà une réservation pour le même livre
                 }
 
-                MessageBox.Show("La réservation a été enregistrée avec succès.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Une erreur est survenue lors de l'enregistrement de la réservation : {ex.Message}");
+                DateTime? datePrevuRetrait = TrouverPremiereDateRetourNonReservee(isbn);
+
+                Reservation newReservation = new Reservation
+                {
+                    AdherentID = adherentId,
+                    ISBN = isbn,
+                    DateReservation = dateReservation,
+                    DatePrevuRetrait = datePrevuRetrait
+                };
+
+                context.Reservations.Add(newReservation);
+                try
+                {
+                    context.SaveChanges();
+                    MessageBox.Show("La réservation a été enregistrée avec succès.");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Une erreur est survenue lors de l'enregistrement de la réservation : {ex.Message}");
+                }
             }
             ChargerReservations();
         }
+
 
         private DateTime? TrouverPremiereDateRetourNonReservee(string isbn)
         {
             using (var context = new BibliothequeContext())
             {
-                // Obtenez toutes les dates de retour prévues pour les emprunts de ce livre
-                var emprunts = context.Emprunts
-                    .Where(e => e.ISBN == isbn && e.DateRetourPrevu != DateTime.MinValue)
+                // Obtenez toutes les dates de retour prévues pour ce livre qui ne sont pas encore réservées
+                var datesDeRetour = context.Emprunts
+                    .Where(e => e.ISBN == isbn && e.DateRetourReel == null)
                     .Select(e => e.DateRetourPrevu)
                     .ToList();
 
-                // Obtenez toutes les dates de retrait prévues pour les réservations de ce livre
-                var reservations = context.Reservations
+                var datesReservees = context.Reservations
                     .Where(r => r.ISBN == isbn && r.DatePrevuRetrait.HasValue)
                     .Select(r => r.DatePrevuRetrait.Value)
                     .ToList();
 
-                // Combinez et triez toutes les dates
-                var toutesLesDates = emprunts.Union(reservations).OrderBy(d => d);
+                var premiereDateDisponible = datesDeRetour
+                    .FirstOrDefault(d => !datesReservees.Contains(d));
 
-                foreach (var date in toutesLesDates)
-                {
-                    if (!reservations.Contains(date))
-                    {
-                        return date;
-                    }
-                }
-
-                // Si aucune date n'est trouvée, retournez null ou une date par défaut
-                return null;
+                return premiereDateDisponible;
             }
         }
 
