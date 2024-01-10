@@ -55,11 +55,28 @@
                         <DatePicker x:Name="LoanDatePicker" Margin="2"/>
 
                         <Button Content="Enregistrer Emprunt" Margin="2" Click="RegisterLoanButton_Click"/>
+                        
+                   <TextBlock Text="Nom Adhérent:" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox x:Name="SearchAdherentNameTextBox" Width="150" Margin="5"/>
+                        <TextBlock Text="Titre du Livre:" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox x:Name="SearchBookTitleTextBox" Width="150" Margin="5"/>
+                        <Button Content="Rechercher Emprunt" Click="SearchLoanButton_Click" Margin="5"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="10">
+                        
                     </StackPanel>
 
                     <!-- Liste des emprunts en cours -->
-                    <DataGrid x:Name="LoansDataGrid" Grid.Row="1" AutoGenerateColumns="True" Margin="10">
-                        <!-- Les colonnes du DataGrid seront générées automatiquement -->
+                    <DataGrid x:Name="LoansDataGrid" Grid.Row="1" AutoGenerateColumns="False" Margin="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID Emprunt" Binding="{Binding EmpruntID}" />
+                            <DataGridTextColumn Header="Nom Adhérent" Binding="{Binding Adherent.Nom}" />
+                            <DataGridTextColumn Header="Titre du Livre" Binding="{Binding Livre.Titre}" />
+                            <DataGridTextColumn Header="Date Emprunt" Binding="{Binding DateEmprunt}" />
+                            <DataGridTextColumn Header="Date Retour Prévu" Binding="{Binding DateRetourPrevu}" />
+                            <DataGridTextColumn Header="Date Retour Réel" Binding="{Binding DateRetourReel}" />
+                        </DataGrid.Columns>
                     </DataGrid>
 
                     <!-- Section de modification et de suppression d'un emprunt -->
@@ -72,13 +89,56 @@
             </TabItem>
 
 
-
-
             <TabItem Header="Gestion des Réservations">
-                <StackPanel>
-                    <!-- Ajouter des contrôles pour la gestion des réservations ici -->
-                </StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Section d'enregistrement d'une nouvelle réservation -->
+                    <StackPanel Grid.Row="0" Margin="10">
+                        <TextBlock Text="ID Adhérent:" Margin="2"/>
+                        <TextBox x:Name="AdherentIdReservationTextBox" Width="150" Margin="2"/>
+
+                        <TextBlock Text="ISBN du Livre:" Margin="2"/>
+                        <TextBox x:Name="BookISBNReservationTextBox" Width="150" Margin="2"/>
+
+                        <TextBlock Text="Date de réservation:" Margin="2"/>
+                        <DatePicker x:Name="ReservationDatePicker" Margin="2"/>
+
+                        <Button Content="Enregistrer Réservation" Margin="2" Click="RegisterReservationButton_Click"/>
+
+                        <TextBlock Text="Nom Adhérent:" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox x:Name="SearchAdherentNameReservationTextBox" Width="150" Margin="5"/>
+                        <TextBlock Text="Titre du Livre:" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox x:Name="SearchBookTitleReservationTextBox" Width="150" Margin="5"/>
+                        <Button Content="Rechercher Réservation" Click="SearchReservationButton_Click" Margin="5"/>
+                    </StackPanel>
+
+                    <!-- Liste des réservations en cours -->
+                    <DataGrid x:Name="ReservationsDataGrid" Grid.Row="1" AutoGenerateColumns="False" Margin="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID Réservation" Binding="{Binding ReservationID}" />
+                            <DataGridTextColumn Header="Nom Adhérent" Binding="{Binding Adherent.Nom}" />
+                            <DataGridTextColumn Header="Titre du Livre" Binding="{Binding Livre.Titre}" />
+                            <DataGridTextColumn Header="Date Réservation" Binding="{Binding DateReservation}" />
+                            <DataGridTextColumn Header="Date Prévue Retrait" Binding="{Binding DatePrevuRetrait}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Section de modification et de suppression d'une réservation -->
+                    <StackPanel Grid.Row="2" Margin="10" Orientation="Horizontal">
+                        <Button Content="Modifier Réservation" Margin="2" Click="ModifyReservationButton_Click"/>
+                        <DatePicker x:Name="RetraitDatePicker" Margin="2"/>
+                        <Button Content="Annuler Réservation" Margin="2" Click="CancelReservationButton_Click"/>
+                    </StackPanel>
+                </Grid>
             </TabItem>
+
+
+
         </TabControl>
     </Grid>
 </Window>
